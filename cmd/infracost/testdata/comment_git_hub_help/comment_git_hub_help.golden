@@ -18,12 +18,14 @@ FLAGS
                                   new               Create a new comment
                                   hide-and-new      Hide previous matching comments and create a new comment
                                   delete-and-new    Delete previous matching comments and create a new comment (default "update")
+      --comment-on-failure      Only post a PR comment if a cost policy fails, must be used with --policy-path (experimental)
       --commit string           Commit SHA to post comment on, mutually exclusive with pull-request
       --dry-run                 Generate comment without actually posting to GitHub
       --github-api-url string   GitHub API URL (default "https://api.github.com")
       --github-token string     GitHub token
   -h, --help                    help for github
   -p, --path stringArray        Path to Infracost JSON files, glob patterns need quotes
+      --policy-path strings     Paths to any Infracost cost policies (experimental)
       --pull-request int        Pull request number to post comment on, mutually exclusive with commit
       --repo string             Repository in format owner/repo
       --tag string              Customize hidden markdown tag used to detect comments posted by Infracost

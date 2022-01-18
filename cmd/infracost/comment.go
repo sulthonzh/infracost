@@ -1,10 +1,17 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"os"
+
+	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/rego"
+	"github.com/spf13/cobra"
+
 	"github.com/infracost/infracost/internal/config"
 	"github.com/infracost/infracost/internal/output"
 	"github.com/infracost/infracost/internal/ui"
-	"github.com/spf13/cobra"
 )
 
 func commentCmd(ctx *config.RunContext) *cobra.Command {
@@ -29,9 +36,13 @@ func commentCmd(ctx *config.RunContext) *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(commentGitHubCmd(ctx))
-	cmd.AddCommand(commentGitLabCmd(ctx))
-	cmd.AddCommand(commentAzureReposCmd(ctx))
+	cmds := []*cobra.Command{commentGitHubCmd(ctx), commentGitLabCmd(ctx), commentAzureReposCmd(ctx)}
+	for _, subCmd := range cmds {
+		subCmd.Flags().StringSlice("policy-path", nil, "Paths to any Infracost cost policies (experimental)")
+		subCmd.Flags().Bool("comment-on-failure", false, "Only post a PR comment if a cost policy fails, must be used with --policy-path (experimental)")
+	}
+
+	cmd.AddCommand(cmds...)
 
 	return cmd
 }
@@ -57,11 +68,21 @@ func buildCommentBody(cmd *cobra.Command, ctx *config.RunContext, paths []string
 		combined.RunID, combined.ShareURL = shareCombinedRun(ctx, combined, inputs)
 	}
 
+	var policyChecks output.PolicyCheck
+	policyPaths, _ := cmd.Flags().GetStringSlice("policy-path")
+	if len(policyPaths) > 0 {
+		policyChecks, err = queryPolicy(policyPaths, combined)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	opts := output.Options{
 		DashboardEnabled: ctx.Config.EnableDashboard,
 		NoColor:          ctx.Config.NoColor,
 		IncludeHTML:      true,
 		ShowSkipped:      true,
+		PolicyChecks:     policyChecks,
 	}
 
 	b, err := output.ToMarkdown(combined, opts, mdOpts)
@@ -69,5 +90,57 @@ func buildCommentBody(cmd *cobra.Command, ctx *config.RunContext, paths []string
 		return nil, err
 	}
 
+	if policyChecks.HasFailed() {
+		return b, policyChecks.Failures
+	}
+
 	return b, nil
+}
+
+func queryPolicy(policyPaths []string, input output.Root) (output.PolicyCheck, error) {
+	checks := output.PolicyCheck{
+		Enabled: true,
+	}
+
+	inputValue, err := ast.InterfaceToValue(input)
+	if err != nil {
+		return checks, fmt.Errorf("Unable to process infracost output into rego input: %s", err.Error())
+	}
+
+	ctx := context.Background()
+	r := rego.New(
+		rego.Query("data.infracost.deny"),
+		rego.ParsedInput(inputValue),
+		rego.Load(policyPaths, func(abspath string, info os.FileInfo, depth int) bool {
+			return false
+		}),
+	)
+	pq, err := r.PrepareForEval(ctx)
+	if err != nil {
+		return checks, fmt.Errorf("Unable to query cost policy: %s", err.Error())
+	}
+
+	res, err := pq.Eval(ctx)
+	if err != nil {
+		return checks, err
+	}
+
+	var errs []string
+	for _, e := range res[0].Expressions {
+		switch v := e.Value.(type) {
+		case []interface{}:
+			for _, i := range v {
+				errs = append(errs, fmt.Sprintf("%s", i))
+			}
+		case interface{}:
+			errs = append(errs, e.String())
+		}
+	}
+
+	if len(errs) == 0 {
+		return checks, nil
+	}
+
+	checks.Failures = errs
+	return checks, nil
 }

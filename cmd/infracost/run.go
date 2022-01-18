@@ -64,7 +64,7 @@ func addRunFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagFilename("usage-file", "yml")
 }
 
-func runMain(cmd *cobra.Command, runCtx *config.RunContext) error {
+func runMain(cmd *cobra.Command, runCtx *config.RunContext, out io.Writer) error {
 	if runCtx.Config.IsSelfHosted() && runCtx.Config.EnableDashboard {
 		ui.PrintWarning(cmd.ErrOrStderr(), "The dashboard is part of Infracost's hosted services. Contact hello@infracost.io for help.")
 	}
@@ -214,10 +214,17 @@ func runMain(cmd *cobra.Command, runCtx *config.RunContext) error {
 		if err != nil {
 			return err
 		}
-	} else {
-		cmd.Println(string(b))
+
+		return nil
 	}
 
+	if out != nil {
+		_, err := out.Write(b)
+
+		return err
+	}
+
+	cmd.Println(string(b))
 	return nil
 }
 
@@ -360,7 +367,7 @@ func runProjectConfig(cmd *cobra.Command, runCtx *config.RunContext, ctx *config
 
 	spinner.Success()
 
-	if !runCtx.Config.IsLogging() {
+	if !runCtx.Config.IsLogging() && !runCtx.Config.SkipErrLine {
 		cmd.PrintErrln()
 	}
 

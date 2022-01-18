@@ -350,6 +350,18 @@ New monthly cost: {{ formatCost .Root.TotalMonthlyCost }}
 {{- if .Options.IncludeHTML }}
 </details>
 {{- end}}
+{{- if .Options.PolicyChecks.Enabled }}
+	{{- if gt (len .Options.PolicyChecks.Failures) 0 }}
+<details>
+<summary><strong>❌ Policy checks failed</strong></summary>
+{{ range $v, $f := .Options.PolicyChecks.Failures}}
+  > {{ $f }}
+{{- end}}
+</details>
+	{{ else }}
+✅ Policy checks passed
+	{{- end }}
+{{- end }}
 {{- if .MarkdownOptions.WillUpdate }}
 
 This comment will be updated when the cost estimate changes.

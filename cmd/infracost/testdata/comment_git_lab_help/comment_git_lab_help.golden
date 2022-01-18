@@ -17,6 +17,7 @@ FLAGS
                                      update (default)  Update latest comment
                                      new               Create a new comment
                                      delete-and-new    Delete previous matching comments and create a new comment (default "update")
+      --comment-on-failure         Only post a PR comment if a cost policy fails, must be used with --policy-path (experimental)
       --commit string              Commit SHA to post comment on, mutually exclusive with merge-request
       --dry-run                    Generate comment without actually posting to GitLab
       --gitlab-server-url string   GitLab Server URL (default "https://gitlab.com")
@@ -24,6 +25,7 @@ FLAGS
   -h, --help                       help for gitlab
       --merge-request int          Merge request number to post comment on, mutually exclusive with commit
   -p, --path stringArray           Path to Infracost JSON files, glob patterns need quotes
+      --policy-path strings        Paths to any Infracost cost policies (experimental)
       --repo string                Repository in format owner/repo
       --tag string                 Customize hidden markdown tag used to detect comments posted by Infracost
 
