@@ -12,10 +12,12 @@ func getACMCertificate() *schema.RegistryItem {
 	}
 }
 func NewAcmCertificate(d *schema.ResourceData, u *schema.UsageData) *schema.Resource {
-	r := &aws.AcmCertificate{Address: strPtr(d.Address), Region: strPtr(d.Get("region").String())}
-	if !d.IsEmpty("certificate_authority_arn") {
-		r.CertificateAuthorityArn = strPtr(d.Get("certificate_authority_arn").String())
+	r := &aws.AcmCertificate{
+		Address:                 d.Address,
+		Region:                  d.Get("region").String(),
+		CertificateAuthorityARN: d.Get("certificate_authority_arn").String(),
 	}
+
 	r.PopulateUsage(u)
 	return r.BuildResource()
 }

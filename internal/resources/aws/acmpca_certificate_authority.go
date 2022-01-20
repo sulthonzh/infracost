@@ -10,20 +10,20 @@ import (
 )
 
 type AcmpcaCertificateAuthority struct {
-	Address         *string
-	Region          *string
+	Address         string
+	Region          string
 	MonthlyRequests *int64 `infracost_usage:"monthly_requests"`
 }
 
-var AcmpcaCertificateAuthorityUsageSchema = []*schema.UsageItem{{Key: "monthly_requests", ValueType: schema.Int64, DefaultValue: 0}}
+var AcmpcaCertificateAuthorityUsageSchema = []*schema.UsageItem{
+	{Key: "monthly_requests", ValueType: schema.Int64, DefaultValue: 0},
+}
 
 func (r *AcmpcaCertificateAuthority) PopulateUsage(u *schema.UsageData) {
 	resources.PopulateArgsWithUsage(r, u)
 }
 
 func (r *AcmpcaCertificateAuthority) BuildResource() *schema.Resource {
-	region := *r.Region
-
 	costComponents := []*schema.CostComponent{
 		{
 			Name:            "Private certificate authority",
@@ -32,7 +32,7 @@ func (r *AcmpcaCertificateAuthority) BuildResource() *schema.Resource {
 			MonthlyQuantity: decimalPtr(decimal.NewFromInt(1)),
 			ProductFilter: &schema.ProductFilter{
 				VendorName:    strPtr("aws"),
-				Region:        strPtr(region),
+				Region:        strPtr(r.Region),
 				Service:       strPtr("AWSCertificateManager"),
 				ProductFamily: strPtr("AWS Certificate Manager"),
 				AttributeFilters: []*schema.AttributeFilter{
@@ -48,28 +48,29 @@ func (r *AcmpcaCertificateAuthority) BuildResource() *schema.Resource {
 		certificateTiers := usage.CalculateTierBuckets(monthlyCertificatesRequests, certificateTierLimits)
 
 		if certificateTiers[0].GreaterThan(decimal.NewFromInt(0)) {
-			costComponents = append(costComponents, certificateCostComponent(region, "Certificates (first 1K)", "0", &certificateTiers[0]))
+			costComponents = append(costComponents, r.certificateCostComponent("Certificates (first 1K)", "0", &certificateTiers[0]))
 		}
 
 		if certificateTiers[1].GreaterThan(decimal.NewFromInt(0)) {
-			costComponents = append(costComponents, certificateCostComponent(region, "Certificates (next 9K)", "1000", &certificateTiers[1]))
+			costComponents = append(costComponents, r.certificateCostComponent("Certificates (next 9K)", "1000", &certificateTiers[1]))
 		}
 
 		if certificateTiers[2].GreaterThan(decimal.NewFromInt(0)) {
-			costComponents = append(costComponents, certificateCostComponent(region, "Certificates (over 10K)", "10000", &certificateTiers[2]))
+			costComponents = append(costComponents, r.certificateCostComponent("Certificates (over 10K)", "10000", &certificateTiers[2]))
 		}
 	} else {
 		var unknown *decimal.Decimal
-		costComponents = append(costComponents, certificateCostComponent(region, "Certificates (first 1K)", "0", unknown))
+		costComponents = append(costComponents, r.certificateCostComponent("Certificates (first 1K)", "0", unknown))
 	}
 
 	return &schema.Resource{
-		Name:           *r.Address,
-		CostComponents: costComponents, UsageSchema: AcmpcaCertificateAuthorityUsageSchema,
+		Name:           r.Address,
+		CostComponents: costComponents,
+		UsageSchema:    AcmpcaCertificateAuthorityUsageSchema,
 	}
 }
 
-func certificateCostComponent(region string, displayName string, usageTier string, monthlyQuantity *decimal.Decimal) *schema.CostComponent {
+func (r *AcmpcaCertificateAuthority) certificateCostComponent(displayName string, usageTier string, monthlyQuantity *decimal.Decimal) *schema.CostComponent {
 	return &schema.CostComponent{
 		Name:            displayName,
 		Unit:            "requests",
@@ -77,7 +78,7 @@ func certificateCostComponent(region string, displayName string, usageTier strin
 		MonthlyQuantity: monthlyQuantity,
 		ProductFilter: &schema.ProductFilter{
 			VendorName:    strPtr("aws"),
-			Region:        strPtr(region),
+			Region:        strPtr(r.Region),
 			Service:       strPtr("AWSCertificateManager"),
 			ProductFamily: strPtr("AWS Certificate Manager"),
 			AttributeFilters: []*schema.AttributeFilter{

@@ -5,7 +5,7 @@ import "github.com/infracost/infracost/internal/schema"
 var ResourceRegistry []*schema.RegistryItem = []*schema.RegistryItem{
 	getAPIGatewayRestAPIRegistryItem(),
 	getAPIGatewayStageRegistryItem(),
-	getAPIGatewayv2APIRegistryItem(),
+	getAPIGatewayV2APIRegistryItem(),
 	GetAutoscalingGroupRegistryItem(),
 	getACMCertificate(),
 	getACMPCACertificateAuthorityRegistryItem(),
@@ -18,7 +18,7 @@ var ResourceRegistry []*schema.RegistryItem = []*schema.RegistryItem{
 	getCloudwatchEventBusItem(),
 	getCloudwatchLogGroupItem(),
 	GetCloudwatchMetricAlarmRegistryItem(),
-	getCodebuildProjectRegistryItem(),
+	getCodeBuildProjectRegistryItem(),
 	getConfigRuleItem(),
 	getConfigurationRecorderItem(),
 	getConfigOrganizationCustomRuleItem(),

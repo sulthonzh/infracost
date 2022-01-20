@@ -12,7 +12,11 @@ func getACMPCACertificateAuthorityRegistryItem() *schema.RegistryItem {
 	}
 }
 func NewAcmpcaCertificateAuthority(d *schema.ResourceData, u *schema.UsageData) *schema.Resource {
-	r := &aws.AcmpcaCertificateAuthority{Address: strPtr(d.Address), Region: strPtr(d.Get("region").String())}
+	r := &aws.AcmpcaCertificateAuthority{
+		Address: d.Address,
+		Region:  d.Get("region").String(),
+	}
+
 	r.PopulateUsage(u)
 	return r.BuildResource()
 }
