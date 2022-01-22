@@ -1,11 +1,11 @@
 package terraform
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/infracost/infracost/internal/config"
 	"github.com/infracost/infracost/internal/schema"
-	"github.com/pkg/errors"
 )
 
 type PlanJSONProvider struct {
@@ -13,7 +13,7 @@ type PlanJSONProvider struct {
 	Path string
 }
 
-func NewPlanJSONProvider(ctx *config.ProjectContext) schema.Provider {
+func NewPlanJSONProvider(ctx *config.ProjectContext) *PlanJSONProvider {
 	return &PlanJSONProvider{
 		ctx:  ctx,
 		Path: ctx.ProjectConfig.Path,
@@ -35,9 +35,13 @@ func (p *PlanJSONProvider) AddMetadata(metadata *schema.ProjectMetadata) {
 func (p *PlanJSONProvider) LoadResources(usage map[string]*schema.UsageData) ([]*schema.Project, error) {
 	j, err := os.ReadFile(p.Path)
 	if err != nil {
-		return []*schema.Project{}, errors.Wrap(err, "Error reading Terraform plan JSON file")
+		return []*schema.Project{}, fmt.Errorf("Error reading Terraform plan JSON file %w", err)
 	}
 
+	return p.LoadResourcesFromSrc(usage, j)
+}
+
+func (p *PlanJSONProvider) LoadResourcesFromSrc(usage map[string]*schema.UsageData, j []byte) ([]*schema.Project, error) {
 	metadata := config.DetectProjectMetadata(p.ctx.ProjectConfig.Path)
 	metadata.Type = p.Type()
 	p.AddMetadata(metadata)
@@ -48,7 +52,7 @@ func (p *PlanJSONProvider) LoadResources(usage map[string]*schema.UsageData) ([]
 
 	pastResources, resources, err := parser.parseJSON(j, usage)
 	if err != nil {
-		return []*schema.Project{project}, errors.Wrap(err, "Error parsing Terraform plan JSON file")
+		return []*schema.Project{project}, fmt.Errorf("Error parsing Terraform plan JSON file %w", err)
 	}
 
 	project.PastResources = pastResources
