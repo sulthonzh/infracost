@@ -7,29 +7,29 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type AcmCertificate struct {
+type ACMCertificate struct {
 	Address                 string
 	Region                  string
 	CertificateAuthorityARN string
 }
 
-var AcmCertificateUsageSchema = []*schema.UsageItem{}
+var ACMCertificateUsageSchema = []*schema.UsageItem{}
 
-func (r *AcmCertificate) PopulateUsage(u *schema.UsageData) {
+func (r *ACMCertificate) PopulateUsage(u *schema.UsageData) {
 	resources.PopulateArgsWithUsage(r, u)
 }
 
-func (r *AcmCertificate) BuildResource() *schema.Resource {
+func (r *ACMCertificate) BuildResource() *schema.Resource {
 	if r.CertificateAuthorityARN == "" {
 		return &schema.Resource{
 			Name:        r.Address,
 			NoPrice:     true,
 			IsSkipped:   true,
-			UsageSchema: AcmCertificateUsageSchema,
+			UsageSchema: ACMCertificateUsageSchema,
 		}
 	}
 
-	certAuthority := &AcmpcaCertificateAuthority{
+	certAuthority := &ACMPCACertificateAuthority{
 		Region: r.Region,
 	}
 
@@ -38,6 +38,6 @@ func (r *AcmCertificate) BuildResource() *schema.Resource {
 	return &schema.Resource{
 		Name:           r.Address,
 		CostComponents: []*schema.CostComponent{certCostComponent},
-		UsageSchema:    AcmCertificateUsageSchema,
+		UsageSchema:    ACMCertificateUsageSchema,
 	}
 }

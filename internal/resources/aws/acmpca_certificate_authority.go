@@ -9,21 +9,21 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type AcmpcaCertificateAuthority struct {
+type ACMPCACertificateAuthority struct {
 	Address         string
 	Region          string
 	MonthlyRequests *int64 `infracost_usage:"monthly_requests"`
 }
 
-var AcmpcaCertificateAuthorityUsageSchema = []*schema.UsageItem{
+var ACMPCACertificateAuthorityUsageSchema = []*schema.UsageItem{
 	{Key: "monthly_requests", ValueType: schema.Int64, DefaultValue: 0},
 }
 
-func (r *AcmpcaCertificateAuthority) PopulateUsage(u *schema.UsageData) {
+func (r *ACMPCACertificateAuthority) PopulateUsage(u *schema.UsageData) {
 	resources.PopulateArgsWithUsage(r, u)
 }
 
-func (r *AcmpcaCertificateAuthority) BuildResource() *schema.Resource {
+func (r *ACMPCACertificateAuthority) BuildResource() *schema.Resource {
 	costComponents := []*schema.CostComponent{
 		{
 			Name:            "Private certificate authority",
@@ -66,11 +66,11 @@ func (r *AcmpcaCertificateAuthority) BuildResource() *schema.Resource {
 	return &schema.Resource{
 		Name:           r.Address,
 		CostComponents: costComponents,
-		UsageSchema:    AcmpcaCertificateAuthorityUsageSchema,
+		UsageSchema:    ACMPCACertificateAuthorityUsageSchema,
 	}
 }
 
-func (r *AcmpcaCertificateAuthority) certificateCostComponent(displayName string, usageTier string, monthlyQuantity *decimal.Decimal) *schema.CostComponent {
+func (r *ACMPCACertificateAuthority) certificateCostComponent(displayName string, usageTier string, monthlyQuantity *decimal.Decimal) *schema.CostComponent {
 	return &schema.CostComponent{
 		Name:            displayName,
 		Unit:            "requests",
