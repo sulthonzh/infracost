@@ -31,7 +31,7 @@ func (r *KinesisAnalyticsV2Application) BuildResource() *schema.Resource {
 
 	var kinesisProcessingUnits *decimal.Decimal
 	if r.KinesisProcessingUnits != nil {
-		kinesisProcessingUnits = decimalPtr(decimal.NewFromInt(*r.KinesisProcessingUnits).Mul(decimal.NewFromInt(50)))
+		kinesisProcessingUnits = decimalPtr(decimal.NewFromInt(*r.KinesisProcessingUnits))
 	}
 
 	var durableApplicationBackupGB *decimal.Decimal
@@ -77,11 +77,16 @@ func (r *KinesisAnalyticsV2Application) processingOrchestrationCostComponent() *
 }
 
 func (r *KinesisAnalyticsV2Application) runningStorageCostComponent(kinesisProcessingUnits *decimal.Decimal) *schema.CostComponent {
+	var quantity *decimal.Decimal
+	if kinesisProcessingUnits != nil {
+		quantity = decimalPtr(kinesisProcessingUnits.Mul(decimal.NewFromInt(50)))
+	}
+
 	return &schema.CostComponent{
 		Name:            "Running storage",
 		Unit:            "GB",
 		UnitMultiplier:  decimal.NewFromInt(1),
-		MonthlyQuantity: kinesisProcessingUnits,
+		MonthlyQuantity: quantity,
 		ProductFilter: &schema.ProductFilter{
 			VendorName:    strPtr("aws"),
 			Region:        strPtr(r.Region),
