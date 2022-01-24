@@ -47,7 +47,7 @@ func (r *Wafv2WebACL) BuildResource() *schema.Resource {
 		ruleGroupRules = decimalPtr(decimal.NewFromInt(*r.RuleGroupRules))
 		managedRuleGroupRules = decimalPtr(decimal.NewFromInt(*r.ManagedRuleGroupRules))
 		sumForRules = ruleGroupRules.Add(*managedRuleGroupRules)
-		if rule.IsPositive() {
+		if rule != nil && rule.IsPositive() {
 			sumForRules = sumForRules.Add(*rule)
 		}
 	}

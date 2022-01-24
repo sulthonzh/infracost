@@ -19,7 +19,10 @@ func NewCloudwatchMetricAlarm(d *schema.ResourceData, u *schema.UsageData) *sche
 	costComponents := make([]*schema.CostComponent, 0)
 
 	if len(d.Get("metric_query").Array()) > 0 {
-		costComponents = append(costComponents, cloudWatchMetricQuery(d, region, "alarm metrics"))
+		costComponent := cloudWatchMetricQuery(d, region, "alarm metrics")
+		if costComponent != nil {
+			costComponents = append(costComponents, costComponent)
+		}
 	} else {
 		costComponents = append(costComponents, cloudWatchMetricName(d, region, "alarm metrics"))
 	}
